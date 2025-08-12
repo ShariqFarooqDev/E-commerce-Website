@@ -1,3 +1,5 @@
+// FILE: frontend/src/pages/PlaceOrderPage.jsx
+// UPDATED: Using the correct 'useAddOrderItemsMutation' hook.
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -6,9 +8,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import Message from '../components/Message';
 import CheckoutSteps from '../components/CheckoutSteps';
 import Loader from '../components/Loader';
-import { useCreateOrderMutation } from '../features/api/orderApiSlice';
+import { useAddOrderItemsMutation } from '../features/api/orderApiSlice';
 import { clearCartItems } from '../features/cart/cartSlice';
-import { formatPrice } from '../utils/formatPrice';
 
 const PlaceOrderPage = () => {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ const PlaceOrderPage = () => {
 
   const cart = useSelector((state) => state.cart);
 
-  const [createOrder, { isLoading, error }] = useCreateOrderMutation();
+  const [addOrderItems, { isLoading, error }] = useAddOrderItemsMutation();
 
   useEffect(() => {
     if (!cart.shippingAddress.address) {
@@ -28,7 +29,7 @@ const PlaceOrderPage = () => {
 
   const placeOrderHandler = async () => {
     try {
-      const res = await createOrder({
+      const res = await addOrderItems({
         orderItems: cart.cartItems,
         shippingAddress: cart.shippingAddress,
         paymentMethod: cart.paymentMethod,
@@ -40,7 +41,7 @@ const PlaceOrderPage = () => {
       dispatch(clearCartItems());
       navigate(`/order/${res._id}`);
     } catch (err) {
-      toast.error(err);
+      toast.error(err?.data?.message || err.error);
     }
   };
 
@@ -84,12 +85,12 @@ const PlaceOrderPage = () => {
                           />
                         </Col>
                         <Col>
-                          <Link to={`/product/${item._id}`}>
+                          <Link to={`/product/${item.product}`}>
                             {item.name}
                           </Link>
                         </Col>
                         <Col md={4}>
-                          {item.qty} x {formatPrice(item.price)} = {formatPrice(item.qty * item.price)}
+                          {item.qty} x ${item.price} = ${item.qty * item.price}
                         </Col>
                       </Row>
                     </ListGroup.Item>
@@ -108,29 +109,31 @@ const PlaceOrderPage = () => {
               <ListGroup.Item>
                 <Row>
                   <Col>Items</Col>
-                  <Col>{formatPrice(cart.itemsPrice)}</Col>
+                  <Col>${cart.itemsPrice}</Col>
                 </Row>
               </ListGroup.Item>
               <ListGroup.Item>
                 <Row>
                   <Col>Shipping</Col>
-                  <Col>{formatPrice(cart.shippingPrice)}</Col>
+                  <Col>${cart.shippingPrice}</Col>
                 </Row>
               </ListGroup.Item>
               <ListGroup.Item>
                 <Row>
                   <Col>Tax</Col>
-                  <Col>{formatPrice(cart.taxPrice)}</Col>
+                  <Col>${cart.taxPrice}</Col>
                 </Row>
               </ListGroup.Item>
               <ListGroup.Item>
                 <Row>
                   <Col>Total</Col>
-                  <Col>{formatPrice(cart.totalPrice)}</Col>
+                  <Col>${cart.totalPrice}</Col>
                 </Row>
               </ListGroup.Item>
               <ListGroup.Item>
-                {error && <Message variant='danger'>{error}</Message>}
+                {error && (
+                  <Message variant='danger'>{error.data.message}</Message>
+                )}
               </ListGroup.Item>
               <ListGroup.Item>
                 <Button

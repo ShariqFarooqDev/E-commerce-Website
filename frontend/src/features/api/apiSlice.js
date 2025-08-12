@@ -1,39 +1,12 @@
-import { apiSlice } from './apiSlice';
-import { ORDERS_URL } from '../../constants';
+// FILE: frontend/src/features/api/apiSlice.js
+// UPDATED: This is the correct version of the file, with no self-import.
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { BASE_URL } from '../../constants';
 
-export const orderApiSlice = apiSlice.injectEndpoints({
-  endpoints: (builder) => ({
-    getOrders: builder.query({
-      query: () => ({
-        url: ORDERS_URL,
-      }),
-      keepUnusedDataFor: 5,
-    }),
-    getOrderDetails: builder.query({
-      query: (id) => ({
-        url: `${ORDERS_URL}/${id}`,
-      }),
-      keepUnusedDataFor: 5,
-    }),
-    payOrder: builder.mutation({
-      query: ({ orderId, details }) => ({
-        url: `${ORDERS_URL}/${orderId}/pay`,
-        method: 'PUT',
-        body: details,
-      }),
-    }),
-    deliverOrder: builder.mutation({
-      query: (orderId) => ({
-        url: `${ORDERS_URL}/${orderId}/deliver`,
-        method: 'PUT',
-      }),
-    }),
-  }),
+const baseQuery = fetchBaseQuery({ baseUrl: BASE_URL });
+
+export const apiSlice = createApi({
+  baseQuery,
+  tagTypes: ['Product', 'Order', 'User'],
+  endpoints: (builder) => ({}),
 });
-
-export const {
-  useGetOrdersQuery,
-  useGetOrderDetailsQuery,
-  usePayOrderMutation,
-  useDeliverOrderMutation,
-} = orderApiSlice;
