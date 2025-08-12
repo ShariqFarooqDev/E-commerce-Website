@@ -1,10 +1,12 @@
+// FILE: backend/controllers/orderController.js
+// UPDATED: Initialized Stripe inside the controller function to ensure API key is loaded.
 import asyncHandler from '../middleware/asyncHandler.js';
 import Order from '../models/orderModel.js';
 import Product from '../models/productModel.js';
 import Stripe from 'stripe';
 import { calcPrices } from '../utils/calcPrices.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// NOTE: Stripe is now initialized inside the function where it's needed.
 
 // @desc    Create new order
 const addOrderItems = asyncHandler(async (req, res) => {
@@ -14,12 +16,10 @@ const addOrderItems = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error('No order items');
   } else {
-    // get the ordered items from our database
     const itemsFromDB = await Product.find({
       _id: { $in: orderItems.map((x) => x._id) },
     });
 
-    // map over the order items and use the price from our items from database
     const dbOrderItems = orderItems.map((itemFromClient) => {
       const matchingItemFromDB = itemsFromDB.find(
         (itemFromDB) => itemFromDB._id.toString() === itemFromClient._id
@@ -32,7 +32,6 @@ const addOrderItems = asyncHandler(async (req, res) => {
       };
     });
 
-    // calculate prices
     const { itemsPrice, taxPrice, shippingPrice, totalPrice } =
       calcPrices(dbOrderItems);
 
@@ -54,16 +53,12 @@ const addOrderItems = asyncHandler(async (req, res) => {
 });
 
 // @desc    Get logged in user orders
-// @route   GET /api/orders/myorders
-// @access  Private
 const getMyOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({ user: req.user._id });
   res.json(orders);
 });
 
 // @desc    Get order by ID
-// @route   GET /api/orders/:id
-// @access  Private
 const getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id).populate(
     'user',
@@ -79,15 +74,14 @@ const getOrderById = asyncHandler(async (req, res) => {
 });
 
 // @desc    Create a stripe payment intent
-// @route   POST /api/orders/:id/create-stripe-intent
-// @access  Private
 const createStripePaymentIntent = asyncHandler(async (req, res) => {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); // <-- INITIALIZE HERE
   const order = await Order.findById(req.params.id);
 
   if (order) {
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(order.totalPrice * 100), // Amount in cents
-      currency: 'usd', // or your preferred currency
+      amount: Math.round(order.totalPrice * 100),
+      currency: 'usd',
       automatic_payment_methods: {
         enabled: true,
       },
@@ -103,8 +97,6 @@ const createStripePaymentIntent = asyncHandler(async (req, res) => {
 });
 
 // @desc    Update order to paid
-// @route   PUT /api/orders/:id/pay
-// @access  Private
 const updateOrderToPaid = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
 
@@ -112,7 +104,7 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
     order.isPaid = true;
     order.paidAt = Date.now();
     order.paymentResult = {
-      id: req.body.id, // Stripe Payment Intent ID
+      id: req.body.id,
       status: req.body.status,
       update_time: req.body.update_time,
       email_address: req.body.email_address,
@@ -127,8 +119,6 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
 });
 
 // @desc    Update order to delivered
-// @route   GET /api/orders/:id/deliver
-// @access  Private/Admin
 const updateOrderToDelivered = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
 
@@ -146,8 +136,6 @@ const updateOrderToDelivered = asyncHandler(async (req, res) => {
 });
 
 // @desc    Get all orders
-// @route   GET /api/orders
-// @access  Private/Admin
 const getOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({}).populate('user', 'id name');
   res.json(orders);
