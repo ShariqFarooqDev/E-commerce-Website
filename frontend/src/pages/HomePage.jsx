@@ -1,18 +1,26 @@
+// FILE: frontend/pages/HomePage.jsx
+// UPDATED to correctly define 'keyword' and 'pageNumber' using useParams.
+import { Link, useParams } from 'react-router-dom';
 import { Row, Col } from 'react-bootstrap';
-import { useParams } from 'react-router-dom';
-import { useGetProductsQuery } from '../features/api/productApiSlice';
 import Product from '../components/Product';
 import Loader from '../components/Loader';
 import Message from '../components/Message';
 import Paginate from '../components/Paginate';
 import ProductCarousel from '../components/ProductCarousel';
-import Meta from '../components/Meta'; // <-- Import Meta component
+import Meta from '../components/Meta';
+import { useGetProductsQuery } from '../features/api/productApiSlice';
 
 const HomePage = () => {
-  // ... existing code
+  const { pageNumber, keyword } = useParams(); // <-- THIS IS THE FIX
+
+  const { data, isLoading, error } = useGetProductsQuery({
+    keyword,
+    pageNumber,
+  });
+
   return (
     <>
-      <Meta /> {/* <-- Add Meta component here */}
+      <Meta />
       {!keyword ? (
         <ProductCarousel />
       ) : (
