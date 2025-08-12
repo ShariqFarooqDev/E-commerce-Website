@@ -1,25 +1,27 @@
-const express = require('express');
+// FILE: backend/routes/productRoutes.js
+// UPDATED to use ES Module (import/export) syntax.
+import express from 'express';
 const router = express.Router();
-const {
+import {
   getProducts,
   getProductById,
-  deleteProduct,
   createProduct,
   updateProduct,
+  deleteProduct,
   createProductReview,
-} = require('../controllers/productController');
-const { protect, admin } = require('../middleware/authMiddleware');
-const upload = require('../middleware/uploadMiddleware');
+  getTopProducts,
+} from '../controllers/productController.js';
+import { protect, admin } from '../middleware/authMiddleware.js';
+import checkObjectId from '../middleware/checkObjectId.js';
 
-router.route('/')
-  .get(getProducts)
-  .post(protect, admin, upload.single('image'), createProduct);
+router.route('/').get(getProducts).post(protect, admin, createProduct);
+router.get('/top', getTopProducts);
+router
+  .route('/:id')
+  .get(checkObjectId, getProductById)
+  .put(protect, admin, checkObjectId, updateProduct)
+  .delete(protect, admin, checkObjectId, deleteProduct);
 
-router.route('/:id')
-  .get(getProductById)
-  .delete(protect, admin, deleteProduct)
-  .put(protect, admin, upload.single('image'), updateProduct);
+router.route('/:id/reviews').post(protect, checkObjectId, createProductReview);
 
-router.route('/:id/reviews').post(protect, createProductReview);
-
-module.exports = router;
+export default router;

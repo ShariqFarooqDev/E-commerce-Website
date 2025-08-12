@@ -1,23 +1,18 @@
 import { Row, Col } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
-import { Link } from 'react-router-dom';
+import { useGetProductsQuery } from '../features/api/productApiSlice';
 import Product from '../components/Product';
 import Loader from '../components/Loader';
 import Message from '../components/Message';
 import Paginate from '../components/Paginate';
 import ProductCarousel from '../components/ProductCarousel';
-import { useGetProductsQuery } from '../features/api/productApiSlice';
+import Meta from '../components/Meta'; // <-- Import Meta component
 
 const HomePage = () => {
-  const { pageNumber, keyword } = useParams();
-
-  const { data, isLoading, error } = useGetProductsQuery({
-    keyword,
-    pageNumber,
-  });
-
+  // ... existing code
   return (
     <>
+      <Meta /> {/* <-- Add Meta component here */}
       {!keyword ? (
         <ProductCarousel />
       ) : (

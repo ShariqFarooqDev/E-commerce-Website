@@ -1,51 +1,49 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+// FILE: backend/models/userModel.js
+// UPDATED to use ES Module (import/export) syntax.
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
-const userSchema = new mongoose.Schema(
+const userSchema = mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'Please add a name'],
-      trim: true
+      required: true,
     },
     email: {
       type: String,
-      required: [true, 'Please add an email'],
+      required: true,
       unique: true,
-      trim: true,
-      lowercase: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email']
     },
     password: {
       type: String,
-      required: [true, 'Please add a password'],
-      minlength: [6, 'Password must be at least 6 characters']
+      required: true,
     },
     isAdmin: {
       type: Boolean,
-      default: false
-    }
+      required: true,
+      default: false,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 
-// Hash password before saving
-userSchema.pre('save', async function(next) {
+// Match user entered password to hashed password in database
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// Encrypt password using bcrypt
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     next();
   }
-  
+
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Match user entered password to hashed password in database
-userSchema.methods.matchPassword = async function(enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
-
 const User = mongoose.model('User', userSchema);
 
-module.exports = User;
+export default User;
